@@ -24,6 +24,7 @@ crossorigin=""></script>
 <body>
 <div id="map" style="width: 100%; height: 650px"></div>
 <script>
+
 var basemap =
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}', {
 attribution: 'Tiles &copy; Esri &mdash; Source: Esri',
@@ -39,7 +40,7 @@ var onEachFeature = function(feature, layer) {
 if (feature.properties) {
 var prop = feature.properties;
 // make a cool little html popup with properties
-var popup = '<h3>'+prop['name']+'</h3>'+'<strong>Date: </strong>'+prop['time'];
+var popup = '<h3>'+prop['time']+'</h3>'+'<strong>Venue: </strong>'+prop['name'];
 // add known info about event to the description
 // you must create a layer property on each feature or else
 // the search results won't know where the item is on the map / layer
@@ -47,6 +48,13 @@ feature.layer = layer;
 layer.bindPopup(popup, {maxWidth: "auto"});
 }
 }; // end onEachFeature
+
+var myIcon = L.icon({
+iconUrl: 'https://cacomixl.github.io/GISC37105-2/Lab8/my-icon.png',
+iconSize: [1, 1],
+iconAnchor: [1, 1],
+popupAnchor: [-1, -1]
+});
 
 var blueCircleMarkers = {
 radius: 4,
@@ -93,7 +101,7 @@ return L.circleMarker(latlng, orangeCircleMarkers);
 // now make a timeline layer that the slider can manipulate
 var searchLayer = L.geoJson(brinton, {
 onEachFeature: onEachFeature,
-pointToLayer: function(feature, latlng) {
+ function(feature, latlng) {
 return L.circleMarker(latlng, greenCircleMarkers);
 }
 });
@@ -121,6 +129,8 @@ props = feature.properties;
 var name = L.DomUtil.create('b', null, container);
 name.innerHTML = props.name;
 container.appendChild(L.DomUtil.create('br', null, container));
+var cat = props.time,
+              info = cat;
 container.appendChild(document.createTextNode(info));
 }
 };
@@ -128,51 +138,47 @@ container.appendChild(document.createTextNode(info));
 var searchControl = L.control.fuseSearch(searchOptions);
 map.addControl(searchControl);
 searchControl.indexFeatures(brinton, ['name']);
-displayFeatures(brinton, searchLayer);
 
 function displayFeatures(features, layer) {
-var popup = L.DomUtil.create('div', 'tiny-popup', map.getContainer());
-for (var id in features) {
-var feat = features[id];
-var cat = feat.properties.name;
-var site = L.geoJson(feat, {
-pointToLayer: function(feature, latLng) {
-var marker = L.marker(latLng, {
-icon: myIcon,
-keyboard: false,
-riseOnHover: true
-});
-if (! L.touch) {
-marker.on('mouseover', function(position) {
-}).on('mouseout', function(position) {
-L.DomUtil.removeClass(popup, 'visible');
-});
-}
-return marker;
-},
-onEachFeature: onEachFeature
-});
-if (layer !== undefined) {
-layer.addLayer(site);
-}
-}
-return layer;
+ var popup = L.DomUtil.create('div', 'tiny-popup', map.getContainer());
+ for (var id in features) {
+  var feat = features[id];
+  var cat = feat.properties.name;
+  var site = L.geoJson(feat, {
+   pointToLayer: function(feature, latLng) {
+    var marker = L.marker(latLng, {
+     icon: myIcon,
+     keyboard: false,
+     riseOnHover: true
+    });
+    if (! L.touch) {
+     marker.on('mouseover', function(position) {
+     }).on('mouseout', function(position) {
+      L.DomUtil.removeClass(popup, 'visible');
+     });
+    }
+    return marker;
+   },
+   onEachFeature: onEachFeature
+  });
+  if (layer !== undefined) {
+   layer.addLayer(site);
+  }
+ }
+ return layer;
 };
+
+displayFeatures(brinton, searchLayer);
+
 var overlays = {
-"People": firstlayer
+"Performances": firstlayer
 };
+
 var baseMaps = {
 "Historic": basemap
 };
-L.control.layers(overlays, baseMaps, {collapsed:false}).addTo(map);
 
-var myIcon = L.icon({
-iconUrl: 'my-icon.png',
-iconRetinaUrl: 'my-icon@2x.png',
-iconSize: [1, 1],
-iconAnchor: [1, 1],
-popupAnchor: [-1, -1]
-});
+L.control.layers(overlays, baseMaps, {collapsed:false}).addTo(map);
 
 
 </script>
