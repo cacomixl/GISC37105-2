@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Final Project</title>
+
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css"crossorigin=""/>
+
+		<script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js"crossorigin=""></script>
+
+		<script src="https://cacomixl.github.io/GISC37105-2/FinalProject/interp_70_wgs.geojson"></script>
+		<script src="https://cacomixl.github.io/GISC37105-2/FinalProject/urp_areas.geojson"></script>
+		<script src="https://cacomixl.github.io/GISC37105-2/FinalProject/urp_boundary.geojson"></script>
+		
+		<style type="text/css">
+ 			html, body { margin: 0; padding: 0; height: 100%; }
+ 			#map { min-height: 100%; }
+			header {
+				background-color: rgba(255, 255, 255, 0.5);
+				padding: 0px;
+				
+			}
+		</style>
+	</head>
+	<body>
+		 <header>
+			<h1>Longitudinal Change in the Southeast Englewood Urban Renewal Project</h1>
+		 </header>
+		
+ 		 <div>
+			<label for="year">Year:</label>
+			<div id="year">
+				<input type="radio" id="year1970" name="year" value="1970" checked>
+				<label for="year1970">1970</label>
+				<input type="radio" id="year2020" name="year" value="2020">
+				<label for="year2020">2020</label>
+			</div>
+		</div>
+		
+		<div id="map"></div>
+
+ 		<script type="text/javascript">
+ 		
+ 		var map = L.map('map', {
+ 				center: [41.7638, -87.632124], 
+ 				zoom: 15,
+				layers: basemaps});
+
+ 		var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        });
+		
+		var light = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+			subdomains: 'abcd',
+			maxZoom: 20
+		}).addTo(map);
+		
+		var dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+			subdomains: 'abcd',
+			maxZoom: 20
+		});
+
+var light = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+	attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
+	maxZoom: 16
+});
+		
+		function getChgColor(value) {
+		return value > 0.5 ? '#a50026':
+	value > 0.25 ? '#d73027':
+    value > 0 ? '#f46d43':
+    value > -0.25 ? '#fdae61':
+                  '#fee08b';
+}
+
+function getPopColor(value) {
+    return value > 250 ? '#f7fbff':
+    value > 175 ? '#deebf7':
+    value > 100 ? '#c6dbef':
+    value > 40 ? '#9ecae1':
+                  '#3182bd';
+}
+
+function getHouColor(value) {
+    return value > 200 ? '#f7fbff':
+    value > 120 ? '#deebf7':
+    value > 80 ? '#c6dbef':
+    value > 50 ? '#9ecae1':
+                  '#3182bd';
+}
+
+function getVacColor(value) {
+    return value > 40 ? '#f7fbff':
+    value > 20 ? '#deebf7':
+    value > 15 ? '#c6dbef':
+    value > 5 ? '#9ecae1':
+                  '#3182bd';
+}
+		
+		function chorStyle(columnName, getColorFunction) {
+			return function (feature) {
+				return {
+					fillColor: getColorFunction(feature.properties[columnName]),
+					weight: 0.5,
+					opacity: 1,
+					color: 'white',
+					fillOpacity: 0.9
+				};
+			};
+		}
+		
+		function getAreaColor(value) {
+			return value == 'R-M' ? '#FF8C00':
+			value == 'P' ? '#17A50A':
+			value == 'C' ? '#18AADF':
+			value == 'R-L' ? '#E1E325':
+			value == 'I' ? '#C61B1E':
+							'#E99193';
+		}
+		
+		function a_style(feature){
+			return {
+			fillColor: getAreaColor(feature.properties.TYPE),
+			weight: 0.05,
+			opacity: 1,
+			color: 'white',
+			fillOpacity: 1
+			};
+		}
+		
+		function b_style(feature){
+			return {
+			fillColor: 'white',
+			fillOpacity: 0,
+			color: 'red',
+			weight: 3.5,
+			opacity: 1
+			};
+		}
+		
+		var onEachChor = function(feature, layer) {
+			if (feature.properties) {
+				var prop = feature.properties;
+				var pctUrpRounded = parseFloat(prop['PCT_URP']).toFixed(2);
+				var popup = '<h3>'+'Block ' + prop['BLOCKA']+ ', Tract ' + prop['TRACTA']+ ', Cook County' + '<h3>'+
+							'<br>% Altered in Urban Renewal:</strong> '+pctUrpRounded+
+							'<br>Population, 1970: '+prop['POP70']+
+							'<br>Population, 2020: '+prop['POP20']+
+							'<br>Housing Units, 1970: '+prop['HOU70']+
+							'<br>Housing Units, 2020: '+prop['HOU20']+
+							'<br>Vacant Units, 1970: '+prop['VAC70']+
+							'<br>Vacant Units, 2020: '+prop['HOU20'];
+				feature.layer = layer;
+				layer.bindPopup(popup, {maxWidth: "250"});
+			}
+		};
+		
+		var pop = new L.geoJson(urp, {onEachFeature:onEachChor, style: chorStyle('PCT_POP_CHG', getChgColor)});
+		var hou = new L.geoJson(urp, {onEachFeature:onEachChor, style: chorStyle('PCT_HOU_CHG', getChgColor)});
+		var vac = new L.geoJson(urp, {onEachFeature:onEachChor, style: chorStyle('PCT_VAC_CHG', getChgColor)});
+		
+		var pop70 = new L.geoJson(urp, {onEachFeature:onEachChor, style: chorStyle('POP70', getPopColor)});
+		var hou70 = new L.geoJson(urp, {onEachFeature:onEachChor, style: chorStyle('HOU70', getHouColor)});
+		var vac70 = new L.geoJson(urp, {onEachFeature:onEachChor, style: chorStyle('VAC70', getVacColor)});
+		
+		var pop20 = new L.geoJson(urp, {onEachFeature:onEachChor, style: chorStyle('POP20', getPopColor)});
+		var hou20 = new L.geoJson(urp, {onEachFeature:onEachChor, style: chorStyle('HOU20', getHouColor)});
+		var vac20 = new L.geoJson(urp, {onEachFeature:onEachChor, style: chorStyle('VAC20', getVacColor)});
+		
+		var pcu = new L.geoJson(urp, {onEachFeature:onEachChor, style: chorStyle('PCT_URP', getChgColor)});
+		var ura = new L.geoJson(urp_areas, {style:a_style}).addTo(map);
+		var urb = new L.geoJson(urp_boundary, {style:b_style}).addTo(map);
+
+		var basemaps = {
+			"Light": light,
+			"Dark": dark,
+			"OpenStreetMap": osm,
+		};
+		
+		var urpinfomaps = {
+			"Urban Renewal Areas": ura,
+            "Urban Renewal Project Boundary": urb,
+			"Percent in Urban Renewal": pcu,
+			"Population Change": pop,
+            "Housing Change": hou,
+			"Vacancy Change": vac,
+		};
+		
+		var overlaymaps1970 = {
+            "Population, 1970": pop70,
+            "Housing Units, 1970": hou70,
+			"Vacancies, 1970": vac70,
+        };
+
+        var overlaymaps2020 = {
+            "Population, 2020": pop20,
+            "Housing Units, 2020": hou20,
+			"Vacancies, 2020": vac20,
+        };
+
+		var control = L.control.layers(basemaps, urpinfomaps, {collapsed: false}).addTo(map);
+
+		document.querySelectorAll('input[name="year"]').forEach(function(input) {
+			input.addEventListener('change', function() {
+				if (this.value === '1970') {
+					control.removeLayer(pop20);
+					control.removeLayer(hou20);
+					control.removeLayer(vac20);
+					control.removeLayer(pcu);
+					for (var layer in overlaymaps1970) {
+						control.addOverlay(overlaymaps1970[layer], layer);
+					}
+				} else if (this.value === '2020') {
+					control.removeLayer(pop70);
+					control.removeLayer(hou70);
+					control.removeLayer(vac70);
+					control.removeLayer(pcu);
+					for (var layer in overlaymaps2020) {
+						control.addOverlay(overlaymaps2020[layer], layer);
+					}
+				}
+				control._update();
+			});
+        });
+		
+		document.querySelector('input[name="year"][value="1970"]').dispatchEvent(new Event('change'));
+ 
+ 		</script>
+ 	</body>
+</html>
