@@ -67,12 +67,16 @@ var light = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ca
 	maxZoom: 16
 });
 		
-		function getChgColor(value) {
-		return value > 0.5 ? '#a50026':
-	value > 0.25 ? '#d73027':
-    value > 0 ? '#f46d43':
-    value > -0.25 ? '#fdae61':
-                  '#fee08b';
+function getChgColor(value) {
+    return value > 0.5 ? '#00441b':   
+           value > 0.25 ? '#238443':  
+           value > 0.15 ? '#66c2a4':  
+           value > 0.05 ? '#b2e2b4': 
+           value > -0.05 ? '#ffffb2': 
+           value > -0.15 ? '#fed976':
+           value > -0.25 ? '#fd8d3c':
+           value > -0.5 ? '#e31a1c': 
+                          '#b10026'; 
 }
 
 function getPopColor(value) {
@@ -208,7 +212,6 @@ function getVacColor(value) {
 					control.removeLayer(pop20);
 					control.removeLayer(hou20);
 					control.removeLayer(vac20);
-					control.removeLayer(pcu);
 					for (var layer in overlaymaps1970) {
 						control.addOverlay(overlaymaps1970[layer], layer);
 					}
@@ -216,7 +219,6 @@ function getVacColor(value) {
 					control.removeLayer(pop70);
 					control.removeLayer(hou70);
 					control.removeLayer(vac70);
-					control.removeLayer(pcu);
 					for (var layer in overlaymaps2020) {
 						control.addOverlay(overlaymaps2020[layer], layer);
 					}
